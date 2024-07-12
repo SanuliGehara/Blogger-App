@@ -34,7 +34,9 @@ function Signup() {
       const data = await res.json();
       // show error message
       if (data.success === false) {
-        setErrorMessage(data.message);
+        setErrorMessage(
+          data.message || "Something went wrong. Please try again."
+        );
       }
       setLoading(false);
 
