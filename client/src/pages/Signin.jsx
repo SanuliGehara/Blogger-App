@@ -111,7 +111,7 @@ function Signin() {
                     <span className="pl-3">Loading...</span>
                   </>
                 ) : (
-                  "Sign Up"
+                  "Sign In"
                 )}
               </Button>
             </form>
