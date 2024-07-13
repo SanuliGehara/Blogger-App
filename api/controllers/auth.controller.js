@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
 import { errorHandler } from "../utils/error.js";
+import jwt from "jsonwebtoken";
 
 export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
@@ -36,6 +37,49 @@ export const signup = async (req, res, next) => {
   try {
     await newUser.save();
     res.json("Signup successful");
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const signin = async (req, res, next) => {
+  const { email, password } = req.body;
+
+  //Check if fields are empty
+  if (!email || !password || email === "" || password === "") {
+    return next(errorHandler(400, "All fields are required"));
+  }
+
+  try {
+    // Find if the user is valid (exists)
+    const validUser = await User.findOne({ email });
+
+    // Error display for wrong email
+    if (!validUser) {
+      return next(errorHandler(404, "User not found"));
+    }
+
+    // Check if password is valid
+    const validPassword = bcryptjs.compareSync(password, validUser.password);
+
+    // Error display for wrong password
+    if (!validPassword) {
+      return next(errorHandler(400, "Invalid password"));
+    }
+    // IF SIGNIN WAS SUCUSSFULL
+    // Create a token
+    const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
+
+    // skip sending the password as response
+    const { password: pass, ...rest } = validUser._doc;
+
+    // Create a cookie
+    res
+      .status(200)
+      .cookie("access token", token, {
+        httpOnly: true,
+      })
+      .json(rest);
   } catch (error) {
     next(error);
   }
