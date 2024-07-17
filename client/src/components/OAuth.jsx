@@ -31,7 +31,6 @@ const OAuth = () => {
       const data = await res.json();
 
       if (res.ok) {
-        console.log(data);
         dispatch(signInSuccess(data));
         navigate("/"); // Naviagte to home page
       }
