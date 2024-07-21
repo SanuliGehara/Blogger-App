@@ -82,13 +82,61 @@ export const deleteUser = async (req, res, next) => {
   }
 };
 
-// Function to Sign Out
+// FUNCTION TO SIGN OUT
 export const signout = (req, res, next) => {
   try {
     res
       .clearCookie("access_token")
       .status(200)
       .json("User has been signed out");
+  } catch (error) {
+    next(error);
+  }
+};
+
+// FUNCTION TO GET ALL USERS
+export const getusers = async (req, res, next) => {
+  // Check if user is not admin
+  if (!req.user.isAdmin) {
+    return next(errorHandler(403, "You are not allowed to see all users"));
+  }
+
+  try {
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+    const sortDirection = req.query.sort === "asc" ? 1 : -1;
+
+    const users = await User.find()
+      .sort({ createdAt: sortDirection })
+      .skip(startIndex)
+      .limit(limit);
+
+    // Users without password
+    const usersWithoutPassword = users.map((user) => {
+      const { password, ...rest } = user._doc;
+      return rest;
+    });
+
+    // Total users
+    const totalUsers = await User.countDocuments();
+
+    // Get last months users
+    const now = new Date();
+    const oneMonthAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
+
+    const lastMonthUsers = await User.countDocuments({
+      createdAt: { $gte: oneMonthAgo },
+    });
+
+    res.status(200).json({
+      user: usersWithoutPassword,
+      totalUsers,
+      lastMonthUsers,
+    });
   } catch (error) {
     next(error);
   }
