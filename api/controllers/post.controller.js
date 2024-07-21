@@ -1,6 +1,7 @@
 import Post from "../models/post.model.js";
 import { errorHandler } from "../utils/error.js";
 
+// FUNCTION TO CREATE A POST
 export const create = async (req, res, next) => {
   // Check if user is not admin
   if (!req.user.isAdmin) {
@@ -28,6 +29,7 @@ export const create = async (req, res, next) => {
   }
 };
 
+// FUNTION TO SHOW ALL THE POSTS OF THAT USER
 export const getPosts = async (req, res, next) => {
   try {
     const startIndex = parseInt(req.query.startIndex) || 0;
@@ -70,6 +72,21 @@ export const getPosts = async (req, res, next) => {
       totalPosts,
       lastMonthPosts,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// FUNTION TO DELETE A POST
+export const deletePost = async (req, res, next) => {
+  // Check if user is admin or allowed to do modifications
+  if (!req.user.isAdmin || req.user.id !== req.params.userId) {
+    return next(errorHandler(403, "You are not allowed to delete this post"));
+  }
+
+  try {
+    await Post.findByIdAndDelete(req.params.postId);
+    res.status(200).json("The post has been deleted");
   } catch (error) {
     next(error);
   }
