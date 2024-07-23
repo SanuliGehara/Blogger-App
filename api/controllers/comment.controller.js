@@ -40,3 +40,29 @@ export const getPostComments = async (req, res, next) => {
     next(error);
   }
 };
+
+// HANDLE LIKE FUNCTIONALITY
+export const likeComment = async (req, res, next) => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) {
+      return next(errorHandler(404, "Comment not found"));
+    }
+
+    const userIndex = comment.like.indexOf(req.user.id);
+    console.log(userIndex);
+    if (userIndex === -1) {
+      //user have not liked
+      comment.numberOfLikes += 1;
+      comment.like.push(req.user.id);
+    } else {
+      // User liked - need to unlike
+      comment.numberOfLikes -= 1;
+      comment.like.splice(userIndex, 1);
+    }
+
+    //save to db
+    await comment.save();
+    res.status(200).json(comment);
+  } catch (error) {}
+};
