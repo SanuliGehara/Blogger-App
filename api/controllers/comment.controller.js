@@ -117,3 +117,40 @@ export const deleteComment = async (req, res, next) => {
     next(error);
   }
 };
+
+// GET ALL THE COMMENTS OF ALL POSTS
+export const getcomments = async (req, res, next) => {
+  // Check not owner of comment or admin
+  if (!req.user.isAdmin) {
+    return next(
+      errorHandler(403, "You are not allowed to get all the comments")
+    );
+  }
+
+  try {
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+    const sortDirection = req.query.sort === "desc" ? -1 : 1;
+    const comments = await Comment.find()
+      .sort({ createdAt: sortDirection })
+      .skip(startIndex)
+      .limit(limit);
+
+    //Get all comments
+    const totalComments = await Comment.countDocuments();
+
+    // Get last month comments
+    const now = new Date();
+    const oneMonthAgo = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate()
+    );
+    const lastMonthComments = await Comment.countDocuments({
+      createdAt: { $gte: oneMonthAgo },
+    });
+    res.status(200).json({ comments, totalComments, lastMonthComments });
+  } catch (error) {
+    next(error);
+  }
+};
